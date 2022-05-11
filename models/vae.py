@@ -176,3 +176,121 @@ class ConditionalVAE_conv(nn.Module):
         z = self.reparameterize(mu, logvar)
         x_rec = self.decode(z, y)
         return x_rec, mu, logvar
+
+class ConditionalVAE_cifar(nn.Module):
+    def __init__(self, args):
+        super(ConditionalVAE_cifar, self).__init__()
+        self.latent_dim = args.latent_dim
+        self.img_size = 64
+        in_channels = 3 if args.dataset == 'cifar10' or args.dataset == 'svhn' else 1
+
+        self.embed_class = nn.Linear(args.class_dim, self.img_size * self.img_size)
+        self.embed_data = nn.Conv2d(in_channels, in_channels, kernel_size=1)
+
+        modules = []
+        # if hidden_dims is None:
+        hidden_dims = [32, 64, 128, 256, 512]
+
+        in_channels += 1 # To account for the extra label channel
+        # Build Encoder
+        for h_dim in hidden_dims:
+            modules.append(
+                nn.Sequential(
+                    nn.Conv2d(in_channels, out_channels=h_dim,
+                              kernel_size= 3, stride= 2, padding  = 1),
+                    nn.BatchNorm2d(h_dim),
+                    nn.LeakyReLU())
+            )
+            in_channels = h_dim
+
+        self.encoder = nn.Sequential(*modules)
+        self.fc_mu = nn.Linear(hidden_dims[-1]*4, self.latent_dim)
+        self.fc_var = nn.Linear(hidden_dims[-1]*4, self.latent_dim)
+
+
+        # Build Decoder
+        modules = []
+
+        self.decoder_input = nn.Linear(self.latent_dim + args.class_dim, hidden_dims[-1] * 4)
+
+        hidden_dims.reverse()
+
+        for i in range(len(hidden_dims) - 1):
+            modules.append(
+                nn.Sequential(
+                    nn.ConvTranspose2d(hidden_dims[i],
+                                       hidden_dims[i + 1],
+                                       kernel_size=3,
+                                       stride = 2,
+                                       padding=1,
+                                       output_padding=1),
+                    nn.BatchNorm2d(hidden_dims[i + 1]),
+                    nn.LeakyReLU())
+            )
+
+        self.decoder = nn.Sequential(*modules)
+
+        self.final_layer = nn.Sequential(
+                            nn.ConvTranspose2d(hidden_dims[-1],
+                                               hidden_dims[-1],
+                                               kernel_size=3,
+                                               stride=2,
+                                               padding=1,
+                                               output_padding=1),
+                            nn.BatchNorm2d(hidden_dims[-1]),
+                            nn.LeakyReLU(),
+                            nn.Conv2d(hidden_dims[-1], out_channels= 3,
+                                      kernel_size= 3, padding= 1),
+                            nn.Tanh())
+
+    def encode(self, input):
+        """
+        Encodes the input by passing through the encoder network
+        and returns the latent codes.
+        :param input: (Tensor) Input tensor to encoder [N x C x H x W]
+        :return: (Tensor) List of latent codes
+        """
+        result = self.encoder(input)
+        result = torch.flatten(result, start_dim=1)
+
+        # Split the result into mu and var components
+        # of the latent Gaussian distribution
+        mu = self.fc_mu(result)
+        log_var = self.fc_var(result)
+
+        return mu, log_var
+
+    def decode(self, z):
+        result = self.decoder_input(z)
+        result = result.view(-1, 512, 2, 2)
+        result = self.decoder(result)
+        result = self.final_layer(result)
+        return result
+
+    def reparameterize(self, mu, logvar):
+        """
+        Will a single z be enough ti compute the expectation
+        for the loss??
+        :param mu: (Tensor) Mean of the latent Gaussian
+        :param logvar: (Tensor) Standard deviation of the latent Gaussian
+        :return:
+        """
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return eps * std + mu
+
+    def forward(self, input, y):
+        # y = y.reshape(1,y.size(0)).transpose(1,0).squeeze()
+        # y = torch.eye(10)[y].cuda()
+        y = y.float()
+        embedded_class = self.embed_class(y)
+        embedded_class = embedded_class.view(-1, self.img_size, self.img_size).unsqueeze(1)
+        embedded_input = self.embed_data(input)
+
+        x = torch.cat([embedded_input, embedded_class], dim = 1)
+        mu, log_var = self.encode(x)
+
+        z = self.reparameterize(mu, log_var)
+
+        z = torch.cat([z, y], dim = 1)
+        return self.decode(z), mu, log_var
