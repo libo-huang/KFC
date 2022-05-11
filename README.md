@@ -10,6 +10,7 @@
 - ignite  
 
 ## How to run
+Please confirm the dataset is well downloaded in the file "./dataset" at first.
 ### You can test our method by executing the script we provide, or by running the following command.
 ```sh
 # Finetuning on svhn
