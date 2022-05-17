@@ -33,6 +33,17 @@ python main.py -dataset svhn -epoch 10 -method LGLvKR_noKR  -gpu 0 -generate
 - -fid:  Whether fid needs to be calculated, default is `False`.
 - -ACC:  Whether ACC needs to be calculated, default is `False`.
 
+## License
+**Apache License 2.0**
+
+| Permissions      | Limitations       | Conditions                       |
+|------------------|-------------------|----------------------------------|
+| ✔️ Commercial use |  ❌  Trademark use |  ⓘ License and copyright notice | 
+| ✔️ Modification   |  ❌  Liability     |  ⓘ State changes                |
+| ✔️ Distribution   |  ❌  Warranty      |                                  |
+| ✔️ Patent use     |                   |                                  |
+| ✔️ Private use    |                   |                                  |
+
  
 
 
