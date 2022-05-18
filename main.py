@@ -108,6 +108,7 @@ def main_LGLvKR_Fine(args):
         print(100 * '-')
     print('Total training time is: %.3f seconds'%time_cost)
 
+
 def main_LGLvKR_joint(args):
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -194,8 +195,8 @@ def main_LGLvKR_joint(args):
         print(100 * '-')
     print('Total training time is: %.3f seconds'%time_cost)
 
-def main_LGLvKR(args):
 
+def main_LGLvKR(args):
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     print(75 * '=' + '\n' + '|| \t model dir:\t%s\t ||\n' % args.modeldir + 75 * '=')
@@ -316,21 +317,22 @@ def main_LGLvKR(args):
         print(100 * '-')
     print('Total training time is: %.3f seconds'%time_cost)
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='')
     common = parser.add_argument_group("common parameters group")
     network = parser.add_argument_group("network parameters group")
     train = parser.add_argument_group("training parameters group")
-    common.add_argument('-modeldir', default='./checkpoints/SplitMNIST/', help='') 
+    common.add_argument('-modeldir', default='./checkpoints', help='check point directory')
     common.add_argument('-dataset',type=str, default='mnist', help='dataset name & uses dataset mnist/svhn/fasion')
     common.add_argument('-data_dir', type=str, default='./dataset/mnist', help='data directory')
     common.add_argument('-tasks', type=int, default=10, help='number of tasks')
     common.add_argument('-batch_size', type=int, default=128, help='batch size')
-    common.add_argument('-op',type = str, default = 'tarin', choices= ['train','eval_'])
-    common.add_argument('-LPIPS', default = False, action = 'store_true', help = 'Whether LPIPS needs to be calculated')
-    common.add_argument('-fid', default = False, action = 'store_true', help = 'Whether fid needs to be calculated')
-    common.add_argument('-ACC', default = False, action = 'store_true', help = 'Whether ACC needs to be calculated')
-    common.add_argument('-generate', default = False, action = 'store_true', help = 'Whether imgs need to be generated')
+    common.add_argument('-op',type=str, default='tarin', choices=['train','eval_'])
+    common.add_argument('-LPIPS', default=False, action='store_true', help='Whether LPIPS needs to be calculated')
+    common.add_argument('-fid', default=False, action='store_true', help='Whether fid needs to be calculated')
+    common.add_argument('-ACC', default=False, action='store_true', help='Whether ACC needs to be calculated')
+    common.add_argument('-generate', default=False, action='store_true', help='Whether imgs need to be generated')
     network.add_argument('-feat_dim', type=int, default=32 * 32, help='input features dimension')
     network.add_argument('-latent_dim', type=int, default=2, help='latent variable dimension')
     network.add_argument('-class_dim', type=int, default=10, help='class or one-hot label dimension')
@@ -342,36 +344,36 @@ if __name__ == '__main__':
     train.add_argument('-epochs', default=10, type=int, metavar='N', help='number of epochs')  
     train.add_argument("-gpu", type=str, default='0', help='which gpu to use')
     train.add_argument("-name", type=str, default='10tasks', help='the name of the temporary saved model')
-    train.add_argument('-method',type = str,default = 'LGLvKR',choices=['LGLvKR_Fine','LGLvKR_joint','LGLvKR','LGLvKR_noFC','LGLvKR_noKR'])
+    train.add_argument('-method',type=str,default='LGLvKR',choices=['LGLvKR_Fine','LGLvKR_joint','LGLvKR','LGLvKR_noFC','LGLvKR_noKR'])
     
     args = parser.parse_args()
 
     if args.dataset == 'mnist' or args.dataset =='mnist28':
         args.feat_dim = 32*32*1
-        model_dir = './checkpoints/SplitMNIST/'
+        args.model_dir = args.model_dir + '/SplitMNIST/'
     elif args.dataset == 'fashion':
         args.feat_dim = 32*32*1
-        model_dir = './checkpoints/fashion/'
+        args.model_dir = args.model_dir + '/fashion/'
     elif args.dataset == 'svhn':
         args.feat_dim = 32*32*3
         args.data_dir = './dataset/svhn'
-        model_dir = './checkpoints/svhn/'
+        args.model_dir = args.model_dir + '/svhn/'
 
-    if args.method == 'LGLvKR_fine' :
-        args.modeldir = model_dir + 'LGLvKR_finetuning/' + '{}epoch'.format(args.epochs)
+    if args.method == 'LGLvKR_fine':
+        args.modeldir = args.model_dir + 'LGLvKR_finetuning/' + '{}epoch'.format(args.epochs)
         main_LGLvKR_Fine(args)
     elif args.method == 'LGLvKR_joint':
-        args.modeldir = model_dir + 'LGLvKR_jointTraining/' + '{}epoch'.format(args.epochs)
+        args.modeldir = args.model_dir + 'LGLvKR_jointTraining/' + '{}epoch'.format(args.epochs)
         main_LGLvKR_joint(args)
 
     elif args.method == 'LGLvKR':
-        args.modeldir = model_dir + 'LGLvKR/' + '{}epoch'.format(args.epochs)
+        args.modeldir = args.model_dir + 'LGLvKR/' + '{}epoch'.format(args.epochs)
         main_LGLvKR(args)
     elif args.method == 'LGLvKR_noFC':
-        args.modeldir = model_dir + 'LGLvKR_noFC/' + '{}epoch'.format(args.epochs)
+        args.modeldir = args.model_dir + 'LGLvKR_noFC/' + '{}epoch'.format(args.epochs)
         args.alpha_var_hat = 0.
         main_LGLvKR(args)
     elif args.method == 'LGLvKR_noKR':
-        args.modeldir = model_dir + 'LGLvKR_noKR/' + '{}epoch'.format(args.epochs)
+        args.modeldir = args.model_dir + 'LGLvKR_noKR/' + '{}epoch'.format(args.epochs)
         args.alpha_aug = 0.
         main_LGLvKR(args)
