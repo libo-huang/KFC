@@ -34,6 +34,10 @@ class Acc_Mnist(nn.Module):
         return y
 
 class ConditionalVAE(nn.Module):
+    """
+    Conditional variational autoencoder network used in LGLvKR,
+    Especially for the MNIST and fashion-MNIST datasets.
+    """
     def __init__(self, args):
         super(ConditionalVAE, self).__init__()
         self.feat_dim = args.feat_dim
@@ -56,7 +60,8 @@ class ConditionalVAE(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(self.hidden_dim, self.feat_dim),
         )
-        self.sigmoid = nn.LeakyReLU()  # 因为Mnist像素值在0-1之间，所以建议用Sigmoid()
+        # Recommend using Sigmoid() instead on MNIST since its pixel values are between 0 and 1.
+        self.sigmoid = nn.LeakyReLU()
 
     def encode(self, x, y):
         x = torch.cat((x, y), 1)
@@ -84,7 +89,11 @@ class ConditionalVAE(nn.Module):
         x_rec = self.decode(z, y)
         return x_rec, mu, logvar
 
-class ConditionalVAE_conv(nn.Module):
+class ConditionalVAE_conv(nn.Module):    
+    """
+    Conditional variational autoencoder network used in LGLvKR,
+    Especially for the SVHN and CIFAR-10 datasets.
+    """
     def __init__(self, args):
         super(ConditionalVAE_conv, self).__init__()
         self.latent_dim = args.latent_dim  # TODO: 128
